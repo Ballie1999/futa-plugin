@@ -53,28 +53,28 @@ public class AutoEnchantModule extends BaseModule {
     private List<ItemStack> currentEnchantBook = new ArrayList<>();
     private BlockPos currentAnvil = null;
 
-    // 附魔进度跟踪
+    // Enchantment progress tracking
     private Map<String, Integer> currentEquipmentEnchants = new HashMap<>();
 
-    // 附魔书箱子缓存：记录每种附魔书所在的箱子坐标
+    // Enchantment book chest cache: records the chest coordinates for each enchantment type
     private Map<String, Integer> enchantBookChestCache = new ConcurrentHashMap<>();
 
-    // 搜索状态相关
+    // Search state related
     private boolean hasSearchedAllChests = false;
 
-    // 附魔尝试次数跟踪
+    // Enchantment attempt tracking
     private int currentEnchantAttempts = 0;
     private ItemStack lastEnchantedItem = null;
 
-    // KillAura 状态跟踪
+    // KillAura state tracking
     private boolean killAuraWasEnabled = false;
 
-    // 钻石装备到装备类型的映射
+    // Mapping from diamond equipment to equipment type
     public static final Map<Integer, EquipmentType> DIAMOND_ITEM_MAP = new ConcurrentHashMap<>();
 
     public static AutoEnchantConfig config = PLUGIN_CONFIG.autoEnchant;
 
-    // 子组件
+    // Sub-components
     private final InventoryHelper invHelper = new InventoryHelper();
     private final EnchantResultChecker resultChecker = new EnchantResultChecker();
     private final ExperienceCollector xpCollector = new ExperienceCollector();
@@ -86,6 +86,7 @@ public class AutoEnchantModule extends BaseModule {
         DIAMOND_ITEM_MAP.put(ItemRegistry.DIAMOND_SWORD.id(), EquipmentType.SWORD);
         DIAMOND_ITEM_MAP.put(ItemRegistry.DIAMOND_PICKAXE.id(), EquipmentType.PICKAXE);
         DIAMOND_ITEM_MAP.put(ItemRegistry.DIAMOND_HELMET.id(), EquipmentType.HELMET);
+        DIAMOND_ITEM_MAP.put(ItemRegistry.TURTLE_HELMET.id(), EquipmentType.HELMET);
         DIAMOND_ITEM_MAP.put(ItemRegistry.DIAMOND_CHESTPLATE.id(), EquipmentType.CHESTPLATE);
         DIAMOND_ITEM_MAP.put(ItemRegistry.DIAMOND_LEGGINGS.id(), EquipmentType.LEGGINGS);
         DIAMOND_ITEM_MAP.put(ItemRegistry.DIAMOND_BOOTS.id(), EquipmentType.BOOTS);
@@ -132,13 +133,13 @@ public class AutoEnchantModule extends BaseModule {
         interactTimer.reset();
         swordHandler.reset();
 
-        // 恢复 KillAura
+        // Restore KillAura
         if (config.pauseKillAura && !CONFIG.client.extra.killAura.enabled) {
             switchKillAura(true);
         }
     }
 
-    // ========== 状态处理方法 ==========
+    // ========== State handling methods ==========
 
     private void onTick(ClientBotTick event) {
         switch (state) {
@@ -166,7 +167,7 @@ public class AutoEnchantModule extends BaseModule {
     private void handleCollectExperience() {
         if (pathingFuture.isCompleted() && inventoryActionFuture.isCompleted()) {
             if (xpCollector.hasEnoughExperience()) {
-                info("已收集足够的经验，开始处理装备, 等级：" + CACHE.getPlayerCache().getThePlayer().getLevel());
+                info("Enough experience collected, starting equipment processing, level: " + CACHE.getPlayerCache().getThePlayer().getLevel());
                 xpCollector.reset();
                 needXp = false;
                 setState(State.OPEN_EQUIPMENT_CHEST);
@@ -177,7 +178,7 @@ public class AutoEnchantModule extends BaseModule {
     }
 
     private void handleOpenEquipmentChest() {
-        // 先检查玩家库存
+        // Check player inventory first
         for (ItemStack itemStack : invHelper.getPlayerInv()) {
             if (DIAMOND_ITEM_MAP.containsKey(itemStack.getId())) {
                 var equipmentType = DIAMOND_ITEM_MAP.get(itemStack.getId());
@@ -185,7 +186,7 @@ public class AutoEnchantModule extends BaseModule {
                     currentItemToEnchant = itemStack;
                     currentEquipmentEnchants = invHelper.getEquipmentEnchantsMaxLevel(itemStack);
                     setState(State.OPEN_ENCHANT_BOOK_CHEST);
-                    info("玩家库存中已找到需要附魔的装备：" + equipmentType);
+                    info("Found equipment needing enchantment in player inventory: " + equipmentType);
                     return;
                 }
             }
@@ -255,7 +256,7 @@ public class AutoEnchantModule extends BaseModule {
                 currentBookChestIndex = 0;
                 currentCachedChestIndex = -1;
                 hasSearchedAllChests = false;
-                info("玩家库存已找到所有需要的附魔书，去铁砧");
+                info("All required enchantment books found in player inventory, going to anvil");
                 setState(State.OPEN_ANVIL);
                 return;
             }
@@ -263,7 +264,7 @@ public class AutoEnchantModule extends BaseModule {
             if (currentBookChestIndex >= config.enchantBookChests.size()) {
                 if (hasSearchedAllChests) {
                     hasSearchedAllChests = false;
-                    info("已搜索完所有箱子但未找到所需附魔书，跳过附魔直接存放装备");
+                    info("Searched all chests but could not find required enchantment books, skipping enchantment and storing equipment directly");
                     setState(State.STORE_RESULT);
                     return;
                 } else {
@@ -275,7 +276,7 @@ public class AutoEnchantModule extends BaseModule {
                 }
             }
 
-            // 检查缓存位置
+            // Check cached location
             if (currentCachedChestIndex == -1) {
                 EquipmentType equipmentType = DIAMOND_ITEM_MAP.get(getCurrentEquipment().getId());
                 if (equipmentType != null) {
@@ -311,7 +312,7 @@ public class AutoEnchantModule extends BaseModule {
 
     private void handleWithdrawEnchantBook() {
         if (actionDelayTimer.tick(config.delayBetweenActions)) {
-            info("开始提取附魔书");
+            info("Starting to withdraw enchantment books");
             var openContainer = CACHE.getPlayerCache().getInventoryCache().getOpenContainer();
             List<InventoryAction> actions = Lists.newArrayList();
 
@@ -319,7 +320,7 @@ public class AutoEnchantModule extends BaseModule {
             if (!inventoryActions.isEmpty()) {
                 actions.add(inventoryActions.get(0));
             } else {
-                warn("当前箱子未找到匹配的附魔书");
+                warn("No matching enchantment books found in current chest");
             }
 
             actions.add(new CloseContainer(openContainer.getContainerId()));
@@ -336,7 +337,7 @@ public class AutoEnchantModule extends BaseModule {
 
     private void handleAwaitEnchantBookWithdraw() {
         if (inventoryActionFuture.isCompleted()) {
-            info("提取附魔书完成");
+            info("Enchantment book withdrawal complete");
             if (!currentEnchantBook.isEmpty()) {
                 currentCachedChestIndex = -1;
                 currentBookChestIndex = 0;
@@ -344,7 +345,7 @@ public class AutoEnchantModule extends BaseModule {
                 hasSearchedAllChests = false;
             } else {
                 currentBookChestIndex++;
-                info("没有找到附魔书，尝试下一个箱子 " + currentBookChestIndex);
+                info("No enchantment books found, trying the next chest " + currentBookChestIndex);
                 setState(State.OPEN_ENCHANT_BOOK_CHEST);
             }
         }
@@ -354,9 +355,9 @@ public class AutoEnchantModule extends BaseModule {
         if (currentItemToEnchant != null) {
             if (currentItemToEnchant.equals(lastEnchantedItem)) {
                 currentEnchantAttempts++;
-                info("装备附魔尝试次数: " + currentEnchantAttempts);
+                info("Equipment enchant attempt count: " + currentEnchantAttempts);
                 if (currentEnchantAttempts > 10) {
-                    warn("装备附魔尝试次数超过10次，进入REST状态");
+                    warn("Equipment enchant attempts exceeded 10, entering REST state");
                     currentEnchantAttempts = 0;
                     setState(State.REST);
                     return;
@@ -372,7 +373,7 @@ public class AutoEnchantModule extends BaseModule {
 
         var anvilOpt = findNearbyAnvil();
         if (anvilOpt.isEmpty()) {
-            warn("在 {} 内找不到铁砧", config.anvilSearchRadius);
+            warn("Could not find an anvil within {}", config.anvilSearchRadius);
             setState(State.REST);
             return;
         }
@@ -404,18 +405,18 @@ public class AutoEnchantModule extends BaseModule {
 
     private void handleEnchantItem() {
         var equipmentType = DIAMOND_ITEM_MAP.get(getCurrentEquipment().getId());
-        info("正在附魔 " + equipmentType);
+        info("Enchanting " + equipmentType);
         var openContainer = CACHE.getPlayerCache().getInventoryCache().getOpenContainer();
         List<InventoryAction> actions = Lists.newArrayList();
 
         if (!resultChecker.needsMoreEnchants(currentItemToEnchant, equipmentType)) {
-            info("装备已经完美附魔 " + equipmentType);
+            info("Equipment is already perfectly enchanted " + equipmentType);
             setState(State.STORE_RESULT);
             return;
         }
 
         if (!hasEnoughEnchantBook()) {
-            warn("附魔书数量不足，需要7本，当前只有" + invHelper.getPlayerInvBook().size() + "本");
+            warn("Not enough enchantment books; need 7, currently only " + invHelper.getPlayerInvBook().size() + " books");
             setState(State.COLLECT_EXPERIENCE);
             return;
         }
@@ -437,7 +438,7 @@ public class AutoEnchantModule extends BaseModule {
             setState(State.AWAIT_ENCHANT);
             actionDelayTimer.reset();
         } else {
-            warn("无法找到装备或附魔书, 前去取");
+            warn("Unable to find equipment or enchantment books, going to fetch");
             closeCurrentContainer();
             setState(State.OPEN_EQUIPMENT_CHEST);
         }
@@ -454,22 +455,22 @@ public class AutoEnchantModule extends BaseModule {
                 if (DIAMOND_ITEM_MAP.containsKey(itemStack.getId())) {
                     var itemData = ItemRegistry.REGISTRY.get(itemStack.getId());
                     String customName = EnchantmentUtil.getCustomName(itemStack);
-                    info("正在检查装备 " + itemData.name() + " " + customName + " id:" + itemStack.getId());
+                    info("Checking equipment " + itemData.name() + " " + customName + " id:" + itemStack.getId());
                     currentItemToEnchant = itemStack;
                     currentEquipmentEnchants = invHelper.getEquipmentEnchantsMaxLevel(currentItemToEnchant);
 
                     var equipmentType = DIAMOND_ITEM_MAP.get(itemStack.getId());
-                    info("附魔完成" + equipmentType + ",当前附魔:" + EnchantmentUtil.getEnchantmentJsonItemCN(currentItemToEnchant));
+                    info("Enchantment completed " + equipmentType + ", current enchants: " + EnchantmentUtil.getEnchantmentJsonItemCN(currentItemToEnchant));
 
                     if (resultChecker.needsMoreEnchants(currentItemToEnchant, equipmentType)) {
-                        info("还没有附魔满，继续附魔" + equipmentType);
+                        info("Not fully enchanted yet, continuing enchantment " + equipmentType);
                         closeCurrentContainer();
                         setState(State.OPEN_ANVIL);
                         return;
                     }
                 }
             }
-            info("所有附魔完成 " + ",当前附魔:" + EnchantmentUtil.getEnchantmentJsonItemCN(currentItemToEnchant));
+            info("All enchantments completed, current enchants: " + EnchantmentUtil.getEnchantmentJsonItemCN(currentItemToEnchant));
             swordHandler.reset();
             closeCurrentContainer();
             setState(State.STORE_RESULT);
@@ -487,20 +488,20 @@ public class AutoEnchantModule extends BaseModule {
             if (currentResultChestIndex >= config.resultChests.size()) {
                 currentResultChestIndex = 0;
             }
-            info("正在打开成品箱子" + (currentResultChestIndex + 1));
+            info("Opening result chest " + (currentResultChestIndex + 1));
             chestManager.openChest(config.resultChests, currentResultChestIndex);
         } else {
             if (config.failChest != null && config.failChest != BlockPos.ZERO) {
-                info("正在打开失败箱子");
+                info("Opening fail chest");
                 var chestPos = config.failChest;
                 pathingFuture = BARITONE.rightClickBlock(chestPos.x(), chestPos.y(), chestPos.z());
                 pathingFuture.addExecutedListener(f -> interactTimer.reset());
             } else {
-                warn("未配置失败箱子，使用普通结果箱子");
+                warn("Fail chest not configured, using regular result chest");
                 if (currentResultChestIndex >= config.resultChests.size()) {
                     currentResultChestIndex = 0;
                 }
-                info("正在打开成品箱子" + (currentResultChestIndex + 1));
+                info("Opening result chest " + (currentResultChestIndex + 1));
                 chestManager.openChest(config.resultChests, currentResultChestIndex);
             }
         }
@@ -531,9 +532,9 @@ public class AutoEnchantModule extends BaseModule {
                 boolean isFullyEnchanted = !resultChecker.needsMoreEnchants(currentItemToEnchant, equipmentType);
 
                 if (isFullyEnchanted) {
-                    info("装备已完全附魔，存放在成品箱子" + (currentResultChestIndex + 1));
+                    info("Equipment fully enchanted, storing in result chest " + (currentResultChestIndex + 1));
                 } else {
-                    info("装备未完全附魔，存放在失败箱子");
+                    info("Equipment not fully enchanted, storing in fail chest");
                 }
 
                 actions.addAll(InventoryActionMacros.deposit(
@@ -564,7 +565,7 @@ public class AutoEnchantModule extends BaseModule {
             currentEquipmentEnchants.clear();
             xpCollector.reset();
             hasSearchedAllChests = false;
-            info("已附魔，已存货");
+            info("Enchanted and stored");
             setState(State.COLLECT_EXPERIENCE);
         }
     }
@@ -573,7 +574,7 @@ public class AutoEnchantModule extends BaseModule {
         setState(State.COLLECT_EXPERIENCE);
     }
 
-    // ========== 公共辅助方法 ==========
+    // ========== Public helper methods ==========
 
     private int requiredXpLevel() {
         return CACHE.getPlayerCache().getThePlayer().getLevel() >= 10 ? 10 : 40;
@@ -594,20 +595,20 @@ public class AutoEnchantModule extends BaseModule {
         if (config.debugMode) {
             debug("AutoEnchant state change: {} -> {}", state, newState);
             if (!enchantBookChestCache.isEmpty()) {
-                debug("当前附魔书缓存：");
+                debug("Current enchantment book cache:");
                 for (Map.Entry<String, Integer> entry : enchantBookChestCache.entrySet()) {
-                    debug("  {}: 箱子 {}", EnchantmentUtil.getChinese(entry.getKey()), entry.getValue());
+                    debug("  {}: chest {}", EnchantmentUtil.getChinese(entry.getKey()), entry.getValue());
                 }
             }
         }
 
-        // KillAura 暂停/恢复逻辑
+        // KillAura pause/resume logic
         if (config.pauseKillAura) {
             if (state == State.COLLECT_EXPERIENCE && newState != State.COLLECT_EXPERIENCE) {
-                // 经验足够，开始操作，暂停 KillAura
+                // Enough experience, start operations and pause KillAura
                 switchKillAura(false);
             } else if (state != State.COLLECT_EXPERIENCE && newState == State.COLLECT_EXPERIENCE) {
-                // 需要收集经验，恢复 KillAura
+                // Need to collect experience, resume KillAura
                 switchKillAura(true);
             }
         }
@@ -616,7 +617,7 @@ public class AutoEnchantModule extends BaseModule {
     }
 
     /**
-     * 切换 KillAura 模块状态
+     * Toggle KillAura module state
      */
     private void switchKillAura(boolean enable) {
         if (CONFIG.client.extra.killAura.enabled == enable) {
@@ -624,7 +625,7 @@ public class AutoEnchantModule extends BaseModule {
         }
         CONFIG.client.extra.killAura.enabled = enable;
         MODULE.get(KillAura.class).syncEnabledFromConfig();
-        info("KillAura 已" + (enable ? "启用" : "禁用"));
+        info("KillAura " + (enable ? "enabled" : "disabled"));
     }
 
     private boolean hasEnoughEnchantBook() {
@@ -639,7 +640,7 @@ public class AutoEnchantModule extends BaseModule {
         if (DIAMOND_ITEM_MAP.get(currentItemToEnchant.getId()) == EquipmentType.LEGGINGS) {
             Map<String, Integer> enchantmentMap = EnchantmentUtil.getEnchantmentMapItem(currentItemToEnchant);
             if (enchantmentMap.containsKey("protection")) {
-                info("发现不兼容的保护腿甲，包含保护: " + enchantmentMap.get("protection"));
+                info("Found incompatible protection leggings, contains protection: " + enchantmentMap.get("protection"));
                 return true;
             }
         }
@@ -701,7 +702,7 @@ public class AutoEnchantModule extends BaseModule {
         try {
             Container openContainer = CACHE.getPlayerCache().getInventoryCache().getOpenContainer();
             if (openContainer != null && openContainer.getContainerId() != 0) {
-                info("正在关闭当前容器 ID: " + openContainer.getContainerId());
+                info("Closing current container ID: " + openContainer.getContainerId());
                 List<InventoryAction> actions = new ArrayList<>();
                 actions.add(new CloseContainer(openContainer.getContainerId()));
                 inventoryActionFuture = INVENTORY.submit(InventoryActionRequest.builder()
@@ -713,12 +714,12 @@ public class AutoEnchantModule extends BaseModule {
                 return true;
             }
         } catch (Exception e) {
-            error("关闭容器失败: " + e.getMessage());
+            error("Failed to close container: " + e.getMessage());
         }
         return false;
     }
 
-    // ========== 内部类：背包查询 ==========
+    // ========== Inner class: inventory query ==========
 
     private class InventoryHelper {
 
@@ -806,7 +807,7 @@ public class AutoEnchantModule extends BaseModule {
         }
     }
 
-    // ========== 内部类：附魔结果判断 ==========
+    // ========== Inner class: enchantment result checker ==========
 
     private class EnchantResultChecker {
 
@@ -868,7 +869,7 @@ public class AutoEnchantModule extends BaseModule {
         }
     }
 
-    // ========== 内部类：经验收集 ==========
+    // ========== Inner class: experience collection ==========
 
     private class ExperienceCollector {
         private int recordedLevel = -1;
@@ -888,16 +889,16 @@ public class AutoEnchantModule extends BaseModule {
             if (distance < 1.4) {
                 if (recordedLevel == -1) {
                     recordedLevel = currentLevel;
-                    info("开始收集经验，当前等级：" + currentLevel + "，目标等级：" + 10);
+                    info("Starting experience collection, current level: " + currentLevel + ", target level: " + 10);
                 } else if (currentLevel != recordedLevel) {
-                    info("等级变化：" + recordedLevel + " -> " + currentLevel);
+                    info("Level changed: " + recordedLevel + " -> " + currentLevel);
                     recordedLevel = currentLevel;
                 }
                 return;
             }
 
             if (pathingFuture == null || pathingFuture.isDone()) {
-                info("正在前往 xpfarm，距离：" + distance + "，当前等级：" + currentLevel);
+                info("Moving to xpfarm, distance: " + distance + ", current level: " + currentLevel);
                 pathingFuture = BARITONE.pathTo(pos.x(), pos.y(), pos.z());
             }
         }
@@ -907,7 +908,7 @@ public class AutoEnchantModule extends BaseModule {
         }
     }
 
-    // ========== 内部类：箱子操作 ==========
+    // ========== Inner class: chest operations ==========
 
     private class ChestManager {
         private final Map<String, Integer> bookCache = new ConcurrentHashMap<>();
@@ -923,7 +924,7 @@ public class AutoEnchantModule extends BaseModule {
                 if (bookCache.containsKey(neededEnchant)) {
                     int cachedIndex = bookCache.get(neededEnchant);
                     if (cachedIndex >= 0 && cachedIndex < config.enchantBookChests.size()) {
-                        info("使用缓存位置：附魔书 " + EnchantmentUtil.getChinese(neededEnchant) + " 在箱子 " + cachedIndex);
+                        info("Using cached location: enchantment book " + EnchantmentUtil.getChinese(neededEnchant) + " in chest " + cachedIndex);
                         return cachedIndex;
                     }
                 }
@@ -940,12 +941,12 @@ public class AutoEnchantModule extends BaseModule {
         }
     }
 
-    // ========== 内部类：铁砧操作辅助 ==========
+    // ========== Inner class: anvil operation helpers ==========
 
     private class AnvilHelper {
 
         /**
-         * 检查铁砧 input 槽 0 是否已有装备
+         * Check whether anvil input slot 0 already has equipment
          */
         public boolean isEquipmentInAnvilSlot0(Container openContainer) {
             var item = openContainer.getItemStack(0);
@@ -954,7 +955,7 @@ public class AutoEnchantModule extends BaseModule {
         }
 
         /**
-         * 获取铁砧 input 槽 0 的物品
+         * Get item in anvil input slot 0
          */
         public ItemStack getAnvilSlot0Item(Container openContainer) {
             var item = openContainer.getItemStack(0);
@@ -965,7 +966,7 @@ public class AutoEnchantModule extends BaseModule {
         }
 
         /**
-         * 从箱子中寻找待附魔的装备
+         * Find equipment to enchant from chest
          */
         public List<InventoryAction> findEquipmentToEnchant(Container openContainer) {
             return InventoryActionMacros.withdraw(
@@ -975,12 +976,12 @@ public class AutoEnchantModule extends BaseModule {
                         EquipmentType type = DIAMOND_ITEM_MAP.get(itemStack.getId());
                         if (type == null) return false;
                         if (!resultChecker.needsMoreEnchants(itemStack, type)) {
-                            info("装备" + type + "已达到目标附魔，跳过");
+                            info("Equipment " + type + " already meets target enchants, skipping");
                             return false;
                         }
-                        info("提取:" + type);
+                        info("Withdrawing: " + type);
                         currentItemToEnchant = itemStack;
-                        info("包含附魔:" + EnchantmentUtil.getEnchantmentJsonItemCN(currentItemToEnchant));
+                        info("Contains enchants: " + EnchantmentUtil.getEnchantmentJsonItemCN(currentItemToEnchant));
                         currentEquipmentEnchants = invHelper.getEquipmentEnchantsMaxLevel(itemStack);
                         return true;
                     }, 1
@@ -988,7 +989,7 @@ public class AutoEnchantModule extends BaseModule {
         }
 
         /**
-         * 放置装备到铁砧第一个槽
+         * Place equipment into the first anvil slot
          */
         public List<InventoryAction> depositEquipment(Container openContainer, ItemStack[] equipmentHolder) {
             return InventoryActionMacros.deposit(
@@ -998,18 +999,18 @@ public class AutoEnchantModule extends BaseModule {
                         EquipmentType type = DIAMOND_ITEM_MAP.get(itemStack.getId());
                         if (type == null) return false;
                         if (!resultChecker.needsMoreEnchants(itemStack, type)) {
-                            info("装备" + type + "已达到目标附魔，跳过");
+                            info("Equipment " + type + " already meets target enchants, skipping");
                             return false;
                         }
                         equipmentHolder[0] = itemStack;
-                        info("准备附魔:" + type + ",当前附魔:" + EnchantmentUtil.getEnchantmentJsonItemCN(itemStack));
+                        info("Preparing enchantment: " + type + ", current enchants: " + EnchantmentUtil.getEnchantmentJsonItemCN(itemStack));
                         return true;
                     }, 1
             );
         }
 
         /**
-         * 重命名装备（使用配置随机名）
+         * Rename equipment (using configured random name)
          */
         public void addRenameAction(List<InventoryAction> actions, Container openContainer, ItemStack item) {
             String name = ItemRegistry.REGISTRY.get(item.getId()).name();
@@ -1018,16 +1019,16 @@ public class AutoEnchantModule extends BaseModule {
                 customName = config.getRandomName(name);
             }
             actions.add(new RenameItem(openContainer.getContainerId(), customName));
-            info("装备重命名：" + name);
+            info("Equipment renamed: " + name);
         }
 
         /**
-         * 检查经验并设置 needXp 标志
-         * @return true 表示经验不足
+         * Check experience and set the needXp flag
+         * @return true if experience is insufficient
          */
         public boolean checkAndSetXp(int requiredLevel) {
             if (CACHE.getPlayerCache().getThePlayer().getLevel() < requiredLevel) {
-                info("需要" + requiredLevel + "级经验, 当前等级:" + CACHE.getPlayerCache().getThePlayer().getLevel());
+                info("Need " + requiredLevel + " levels of experience, current level: " + CACHE.getPlayerCache().getThePlayer().getLevel());
                 needXp = true;
                 return true;
             }
@@ -1035,7 +1036,7 @@ public class AutoEnchantModule extends BaseModule {
         }
 
         /**
-         * 找到匹配的附魔书
+         * Find matching enchantment books
          */
         public List<InventoryAction> findMatchingEnchantBook(Container openContainer, ItemStack currentItem, List<ItemStack> enchantBookList, int bookChestIndex, Map<String, Integer> cache) {
             List<InventoryAction> withdrawActions = Lists.newArrayList();
@@ -1051,7 +1052,7 @@ public class AutoEnchantModule extends BaseModule {
 
             List<String> neededEnchants = resultChecker.getAllNeededEnchantmentsBook(strategy);
             if (neededEnchants.isEmpty()) {
-                info("装备" + equipmentType + "已达到目标附魔配置");
+                info("Equipment " + equipmentType + " already matches target enchantment config");
                 return withdrawActions;
             }
 
@@ -1063,7 +1064,7 @@ public class AutoEnchantModule extends BaseModule {
                         Map<String, Integer> enchantmentMap = EnchantmentUtil.getBookEnchantmentMapMaxLevel(itemStack);
                         for (String neededEnchant : neededEnchants) {
                             if (enchantmentMap.containsKey(neededEnchant) && !foundBooks.containsKey(neededEnchant)) {
-                                info("提取附魔书:" + EnchantmentUtil.getChinese(neededEnchant) + enchantmentMap.get(neededEnchant));
+                                info("Withdrawing enchantment book: " + EnchantmentUtil.getChinese(neededEnchant) + enchantmentMap.get(neededEnchant));
                                 foundBooks.put(neededEnchant, itemStack);
                                 cache.put(neededEnchant, bookChestIndex);
                                 return true;
@@ -1078,21 +1079,21 @@ public class AutoEnchantModule extends BaseModule {
         }
 
         /**
-         * 普通附魔处理
+         * Normal enchantment handling
          */
         public void handleNormalEnchant(Container openContainer, List<InventoryAction> actions, ItemStack equipment, EquipmentType type) {
-            info("普通附魔处理");
+            info("Normal enchantment handling");
 
             if (!resultChecker.needsMoreEnchants(equipment, type)) {
                 return;
             }
 
-            // 检查铁砧 input 槽 0 是否已有装备
+            // Check whether anvil input slot 0 already has equipment
             boolean alreadyInAnvil = anvilHelper.isEquipmentInAnvilSlot0(openContainer);
             List<InventoryAction> equipActions;
             if (alreadyInAnvil) {
-                info("装备已在铁砧 input 槽 0，跳过 deposit");
-                equipActions = Lists.newArrayList(); // 空列表，跳过 deposit
+                info("Equipment is already in anvil input slot 0, skipping deposit");
+                equipActions = Lists.newArrayList(); // Empty list, skip deposit
             } else {
                 ItemStack[] equipmentHolder = new ItemStack[]{equipment};
                 equipActions = depositEquipment(openContainer, equipmentHolder);
@@ -1112,7 +1113,7 @@ public class AutoEnchantModule extends BaseModule {
                         if (b && !nextNeededEnchantment.isEmpty()) {
                             Map<String, Integer> enchantmentMap = EnchantmentUtil.getEnchantmentMap(itemStack);
                             if (enchantmentMap.containsKey(nextNeededEnchantment)) {
-                                info("使用附魔书: " + EnchantmentUtil.getChinese(nextNeededEnchantment));
+                                info("Using enchantment book: " + EnchantmentUtil.getChinese(nextNeededEnchantment));
                                 return true;
                             }
                         }
@@ -1130,7 +1131,7 @@ public class AutoEnchantModule extends BaseModule {
         }
     }
 
-    // ========== 内部类：剑的特殊附魔处理 ==========
+    // ========== Inner class: special sword enchantment handling ==========
 
     private class SwordEnchantHandler {
         private int stage = 0;
@@ -1142,7 +1143,7 @@ public class AutoEnchantModule extends BaseModule {
         }
 
         /**
-         * 根据剑的状态确定当前阶段
+         * Determine the current stage based on sword state
          */
         public int determineStage() {
             ItemStack sword = getCurrentEquipment();
@@ -1156,7 +1157,7 @@ public class AutoEnchantModule extends BaseModule {
             List<ItemStack> playerInv = invHelper.getPlayerInv();
 
             if (repairCost == 0 && swordEnchants.isEmpty()) {
-                info("检测到剑的RepairCost为0，启动特殊附魔处理");
+                info("Detected sword RepairCost is 0, starting special enchantment handling");
                 return 1;
             }
 
@@ -1178,7 +1179,7 @@ public class AutoEnchantModule extends BaseModule {
         }
 
         /**
-         * 剑的主入口
+         * Main sword handler entry point
          */
         public void handle(Container openContainer, List<InventoryAction> actions) {
             int currentStage = determineStage();
@@ -1194,19 +1195,19 @@ public class AutoEnchantModule extends BaseModule {
                 case 7 -> handleEnchantMergedBook(openContainer, actions, 5);
                 default -> {}
             }
-            info("剑的附魔处理阶段：" + currentStage);
+            info("Sword enchantment handling stage: " + currentStage);
         }
 
         /**
-         * 阶段1：附魔第一本书
+         * Stage 1: enchant the first book
          */
         private void handleFirstBook(Container openContainer, List<InventoryAction> actions) {
-            info("附魔第一本书");
+            info("Enchanting the first book");
 
             boolean alreadyInAnvil = anvilHelper.isEquipmentInAnvilSlot0(openContainer);
             List<InventoryAction> equipActions;
             if (alreadyInAnvil) {
-                info("装备已在铁砧 input 槽 0，跳过 deposit");
+                info("Equipment is already in anvil input slot 0, skipping deposit");
                 equipActions = Lists.newArrayList();
                 ItemStack[] swordHolder = new ItemStack[]{anvilHelper.getAnvilSlot0Item(openContainer)};
                 currentItemToEnchant = swordHolder[0];
@@ -1226,7 +1227,7 @@ public class AutoEnchantModule extends BaseModule {
                         if (EnchantmentUtil.isEnchantedBook(itemStack)) {
                             if (EnchantmentUtil.getEnchantmentMap(itemStack).containsKey(
                                     config.enchant.get(ItemRegistry.DIAMOND_SWORD.name()).enchantments.get(0))) {
-                                info("使用第一本附魔书");
+                                info("Using the first enchantment book");
                                 book.set(itemStack);
                                 return true;
                             }
@@ -1248,13 +1249,13 @@ public class AutoEnchantModule extends BaseModule {
         }
 
         /**
-         * 合并两本附魔书（阶段2/4/6）
+         * Merge two enchantment books (stages 2/4/6)
          */
         private void handleMergeStage(Container openContainer, List<InventoryAction> actions, int currentStage) {
-            info("正在合并附魔书，阶段：" + currentStage);
+            info("Merging enchantment books, stage: " + currentStage);
 
-            int bookIndex1 = currentStage - 1; // 索引1/3/5
-            int bookIndex2 = currentStage;     // 索引2/4/6
+            int bookIndex1 = currentStage - 1; // index 1/3/5
+            int bookIndex2 = currentStage;     // index 2/4/6
 
             AtomicReference<ItemStack> book1 = new AtomicReference<>();
             AtomicReference<ItemStack> book2 = new AtomicReference<>();
@@ -1266,7 +1267,7 @@ public class AutoEnchantModule extends BaseModule {
                             Map<String, Integer> enchantmentMap = EnchantmentUtil.getEnchantmentMap(itemStack);
                             String key = config.enchant.get(ItemRegistry.DIAMOND_SWORD.name()).enchantments.get(bookIndex1);
                             if (enchantmentMap.containsKey(key) && enchantmentMap.size() == 1) {
-                                info("放入 " + EnchantmentUtil.getChinese(key) + " 附魔书");
+                                info("Insert " + EnchantmentUtil.getChinese(key) + " enchantment book");
                                 book1.set(itemStack);
                                 return true;
                             }
@@ -1282,7 +1283,7 @@ public class AutoEnchantModule extends BaseModule {
                             Map<String, Integer> enchantmentMap = EnchantmentUtil.getEnchantmentMap(itemStack);
                             String key = config.enchant.get(ItemRegistry.DIAMOND_SWORD.name()).enchantments.get(bookIndex2);
                             if (enchantmentMap.containsKey(key) && enchantmentMap.size() == 1) {
-                                info("放入 " + EnchantmentUtil.getChinese(key) + " 附魔书");
+                                info("Insert " + EnchantmentUtil.getChinese(key) + " enchantment book");
                                 book2.set(itemStack);
                                 return true;
                             }
@@ -1302,16 +1303,16 @@ public class AutoEnchantModule extends BaseModule {
         }
 
         /**
-         * 附魔合并后的书（阶段3/5/7）— 消除 enchantMergedBook1/2/3 重复
-         * @param bookConfigIndex 配置中的附魔书索引 (1/3/5)
+         * Enchant merged book (stages 3/5/7) — remove enchantMergedBook1/2/3 duplication
+         * @param bookConfigIndex enchantment book index in config (1/3/5)
          */
         private void handleEnchantMergedBook(Container openContainer, List<InventoryAction> actions, int bookConfigIndex) {
-            info("附魔合并后的书（索引" + bookConfigIndex + "）");
+            info("Enchanting merged book (index " + bookConfigIndex + ")");
 
             boolean alreadyInAnvil = anvilHelper.isEquipmentInAnvilSlot0(openContainer);
             List<InventoryAction> equipActions;
             if (alreadyInAnvil) {
-                info("装备已在铁砧 input 槽 0，跳过 deposit");
+                info("Equipment is already in anvil input slot 0, skipping deposit");
                 equipActions = Lists.newArrayList();
                 ItemStack[] swordHolder = new ItemStack[]{anvilHelper.getAnvilSlot0Item(openContainer)};
                 currentItemToEnchant = swordHolder[0];
@@ -1332,7 +1333,7 @@ public class AutoEnchantModule extends BaseModule {
                             Map<String, Integer> enchantmentMap = EnchantmentUtil.getEnchantmentMap(itemStack);
                             if (enchantmentMap.containsKey(config.enchant.get(ItemRegistry.DIAMOND_SWORD.name()).enchantments.get(bookConfigIndex))) {
                                 if (enchantmentMap.size() == 2) {
-                                    info("放入合并附魔书（索引" + bookConfigIndex + "）");
+                                    info("Insert merged enchantment book (index " + bookConfigIndex + ")");
                                     book.set(itemStack);
                                     return true;
                                 }
@@ -1355,36 +1356,36 @@ public class AutoEnchantModule extends BaseModule {
         }
     }
 
-    // ========== 枚举 ==========
+    // ========== Enums ==========
 
     public enum State {
-        COLLECT_EXPERIENCE,        // 收集经验
-        OPEN_EQUIPMENT_CHEST,      // 寻找装备箱子
-        WAITING_EQUIPMENT_CHEST_OPEN,   // 移动到装备箱子
-        WITHDRAW_EQUIPMENT,        // 取出装备
-        AWAIT_EQUIPMENT_WITHDRAW,  // 等待装备取出完成
-        OPEN_ENCHANT_BOOK_CHEST,   // 寻找附魔书箱子
-        AWAIT_ENCHANT_BOOK_CHEST, // 移动到附魔书箱子
-        WITHDRAW_ENCHANT_BOOK,     // 取出附魔书
-        AWAIT_ENCHANT_BOOK_WITHDRAW, // 等待附魔书取出完成
-        OPEN_ANVIL,               // 寻找铁砧
-        AWAIT_ANVIL,            // 移动到铁砧
-        ENCHANT_ITEM,             // 附魔物品
-        AWAIT_ENCHANT,            // 等待附魔完成
-        STORE_RESULT,             // 存储结果
-        MOVE_TO_RESULT_CHEST,     // 移动到成品箱子
-        DEPOSIT_RESULT,           // 存放成品
-        AWAIT_DEPOSIT,            // 等待存放完成
-        REST                      // 休息
+        COLLECT_EXPERIENCE,        // Collect experience
+        OPEN_EQUIPMENT_CHEST,      // Find equipment chest
+        WAITING_EQUIPMENT_CHEST_OPEN,   // Move to equipment chest
+        WITHDRAW_EQUIPMENT,        // Withdraw equipment
+        AWAIT_EQUIPMENT_WITHDRAW,  // Wait for equipment withdrawal completion
+        OPEN_ENCHANT_BOOK_CHEST,   // Find enchantment book chest
+        AWAIT_ENCHANT_BOOK_CHEST, // Move to enchantment book chest
+        WITHDRAW_ENCHANT_BOOK,     // Withdraw enchantment books
+        AWAIT_ENCHANT_BOOK_WITHDRAW, // Wait for enchantment book withdrawal completion
+        OPEN_ANVIL,               // Find anvil
+        AWAIT_ANVIL,            // Move to anvil
+        ENCHANT_ITEM,             // Enchant item
+        AWAIT_ENCHANT,            // Wait for enchantment completion
+        STORE_RESULT,             // Store result
+        MOVE_TO_RESULT_CHEST,     // Move to result chest
+        DEPOSIT_RESULT,           // Deposit result
+        AWAIT_DEPOSIT,            // Wait for deposit completion
+        REST                      // Rest
     }
 
     public enum EquipmentType {
-        SWORD("剑"),
-        PICKAXE("镐"),
-        HELMET("头盔"),
-        CHESTPLATE("胸甲"),
-        LEGGINGS("护腿"),
-        BOOTS("鞋子");
+        SWORD("Sword"),
+        PICKAXE("Pickaxe"),
+        HELMET("Helmet"),
+        CHESTPLATE("Chestplate"),
+        LEGGINGS("Leggings"),
+        BOOTS("Boots");
 
         private final String displayName;
 

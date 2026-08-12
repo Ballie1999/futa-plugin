@@ -23,12 +23,12 @@ public class AutoEnchantConfig {
 
     public Map<String, List<String>> names = new LinkedHashMap<>();
 
-    // 调试选项
+    // Debug options
     public boolean debugMode = false;
 
     public void init() {
         if (enchant.isEmpty()) {
-            // 各装备类型的附魔策略配置
+            // Enchantment strategy configuration for each equipment type
             enchant.put(ItemRegistry.ELYTRA.name(), new EnchantStrategy(Lists.newArrayList("unbreaking", "mending")));
             enchant.put(ItemRegistry.DIAMOND_AXE.name(), new EnchantStrategy(Lists.newArrayList("efficiency", "unbreaking", "mending")));
             enchant.put(ItemRegistry.DIAMOND_SHOVEL.name(), new EnchantStrategy(Lists.newArrayList("efficiency", "unbreaking", "mending")));
@@ -37,12 +37,13 @@ public class AutoEnchantConfig {
             enchant.put(ItemRegistry.DIAMOND_SWORD.name(), new EnchantStrategy(Lists.newArrayList("sweeping_edge", "looting", "sharpness", "fire_aspect", "unbreaking", "knockback", "mending")));
             enchant.put(ItemRegistry.DIAMOND_PICKAXE.name(), new EnchantStrategy(Lists.newArrayList("efficiency", "silk_touch", "unbreaking", "mending")));
             enchant.put(ItemRegistry.DIAMOND_HELMET.name(), new EnchantStrategy(Lists.newArrayList("respiration", "protection", "unbreaking", "mending", "aqua_affinity")));
+            enchant.put(ItemRegistry.TURTLE_HELMET.name(), new EnchantStrategy(Lists.newArrayList("respiration", "protection", "unbreaking", "mending", "aqua_affinity")));
             enchant.put(ItemRegistry.DIAMOND_CHESTPLATE.name(), new EnchantStrategy(Lists.newArrayList("protection", "unbreaking", "mending")));
             enchant.put(ItemRegistry.DIAMOND_LEGGINGS.name(), new EnchantStrategy(Lists.newArrayList("blast_protection", "unbreaking", "mending")));
             enchant.put(ItemRegistry.DIAMOND_BOOTS.name(), new EnchantStrategy(Lists.newArrayList("depth_strider", "feather_falling", "protection", "unbreaking", "mending")));
         }
         if (names.isEmpty()) {
-            // 钻石剑
+            // Diamond Sword
             names.put(ItemRegistry.DIAMOND_SWORD.name(), Lists.newArrayList(
                     "RR·断星之刃",
                     "RR·霜语",
@@ -72,7 +73,7 @@ public class AutoEnchantConfig {
                     "RR·冥光寂灭"
             ));
 
-            // 钻石头盔
+            // Diamond Helmet
             names.put(ItemRegistry.DIAMOND_HELMET.name(), Lists.newArrayList(
                     "RR·山岳之眸",
                     "RR·风语者之冠",
@@ -101,7 +102,18 @@ public class AutoEnchantConfig {
                     "RR·天问残响"
             ));
 
-            // 钻石胸甲
+            // Turtle Helmet
+            names.put(ItemRegistry.TURTLE_HELMET.name(), Lists.newArrayList(
+                    "RR·Ocean Guardian",
+                    "RR·Aquatic Crown",
+                    "RR·Sea Wanderer",
+                    "RR·Coral Protector",
+                    "RR·Tidal Helm",
+                    "RR·Deep Diver",
+                    "RR·Marine Sanctuary"
+            ));
+
+            // Diamond Chestplate
             names.put(ItemRegistry.DIAMOND_CHESTPLATE.name(), Lists.newArrayList(
                     "RR·山岳之心",
                     "RR·风语者之躯",
@@ -123,7 +135,7 @@ public class AutoEnchantConfig {
                     "RR·烁影流霞"
             ));
 
-            // 钻石护腿
+            // Diamond Leggings
             names.put(ItemRegistry.DIAMOND_LEGGINGS.name(), Lists.newArrayList(
                     "RR·踏云行者",
                     "RR·荒原疾影",
@@ -144,7 +156,7 @@ public class AutoEnchantConfig {
                     "RR·逐月余歌"
             ));
 
-            // 钻石靴子
+            // Diamond Boots
             names.put(ItemRegistry.DIAMOND_BOOTS.name(), Lists.newArrayList(
                     "RR·逐风之履",
                     "RR·深渊低语",
@@ -168,7 +180,7 @@ public class AutoEnchantConfig {
                     "RR·夜渡惊鸿"
             ));
 
-            // 钻石镐
+            // Diamond Pickaxe
             names.put(ItemRegistry.DIAMOND_PICKAXE.name(), Lists.newArrayList(
                     "RR·裂岩之诗",
                     "RR·星核凿",
@@ -197,7 +209,7 @@ public class AutoEnchantConfig {
                     "RR·苍穹回掘"
             ));
 
-            // 鞘翅
+            // Elytra
             names.put(ItemRegistry.ELYTRA.name(), Lists.newArrayList(
                     "RR·风之遗书",
                     "RR·云渡之翼",
@@ -222,12 +234,12 @@ public class AutoEnchantConfig {
                     "RR·幽岚月行"
             ));
 
-            // 钻石斧
+            // Diamond Axe
             names.put(ItemRegistry.DIAMOND_AXE.name(), Lists.newArrayList(
                     "RR·雷霆之斧"
             ));
 
-            // 锤
+            // Mace
             names.put(ItemRegistry.MACE.name(), Lists.newArrayList(
                     "RR·月影之锤",
                     "RR·风语",
@@ -242,9 +254,9 @@ public class AutoEnchantConfig {
 
 
     /**
-     * 随机返回一条name
+     * Returns a random name.
      *
-     * @return 随机选中的name
+     * @return randomly selected name
      */
     public String getRandomName(String type) {
         List<String> namesList = names.get(type);
@@ -261,14 +273,14 @@ public class AutoEnchantConfig {
         return enchant.get(equipment);
     }
 
-    // 附魔策略配置类
+    // Enchantment strategy configuration class
     public static class EnchantStrategy {
         public List<String> enchantments = Lists.newArrayList();
         public boolean enabled = true;
 
-        // 构造器设置默认值
+        // Constructor sets default values
         public EnchantStrategy() {
-            // 默认空，在下面的初始化中设置
+            // Default empty; initialized in init()
         }
 
         public EnchantStrategy(List<String> defaultEnchantments) {
