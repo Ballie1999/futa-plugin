@@ -36,16 +36,18 @@ public class AutoEnchantCommand extends Command {
                 .description("""
                         Automatically enchants diamond equipment with configured enchantment strategies.
                         
-                        Only processes diamond equipment (sword, pickaxe, helmet, chestplate, leggings, boots).
+                        Processes diamond equipment (sword, pickaxe, helmet, chestplate, leggings, boots)
+                        and turtle helmet.
                         Each equipment type has its own enchantment strategy configuration.
                         
                         Default enchantment strategies:
-                        🔸 钻石头盔: 水下呼吸 III + 保护 IV + 耐久 III + 经验修补 + 水下速掘 I
-                        🔸 钻石胸甲: 保护 IV + 耐久 III + 经验修补
-                        🔸 钻石护腿: 爆炸保护 IV + 耐久 III + 经验修补
-                        🔸 钻石靴子: 深海探索者 III + 摔落保护 IV + 保护 IV + 耐久 III + 经验修补
-                        🔸 钻石镐: 效率 V + 耐久 III + 经验修补 + 精准采集 I
-                        🔸 钻石剑: 横扫之刃 III + 抢夺 III + 锋利 V + 火焰附加 II + 耐久 III + 击退 II + 经验修补
+                        🔸 Turtle Helmet: Respiration III + Protection IV + Unbreaking III + Mending + Aqua Affinity I
+                        🔸 Diamond Helmet: Respiration III + Protection IV + Unbreaking III + Mending + Aqua Affinity I
+                        🔸 Diamond Chestplate: Protection IV + Unbreaking III + Mending
+                        🔸 Diamond Leggings: Blast Protection IV + Unbreaking III + Mending
+                        🔸 Diamond Boots: Depth Strider III + Feather Falling IV + Protection IV + Unbreaking III + Mending
+                        🔸 Diamond Pickaxe: Efficiency V + Unbreaking III + Mending + Silk Touch I
+                        🔸 Diamond Sword: Sweeping Edge III + Looting III + Sharpness V + Fire Aspect II + Unbreaking III + Knockback II + Mending
                         
                         The module will collect experience, find equipment, match enchantment books,
                         use anvils to enchant, and store results automatically.
@@ -277,8 +279,8 @@ public class AutoEnchantCommand extends Command {
                     c.getSource().getEmbed()
                             .title("Pause KillAura " + (enchantConfig.pauseKillAura ? "Enabled" : "Disabled"))
                             .description(enchantConfig.pauseKillAura
-                                    ? "KillAura 将在附魔操作期间自动暂停"
-                                    : "KillAura 将保持启用状态");
+                                    ? "KillAura will be automatically paused during enchanting operations"
+                                    : "KillAura will remain enabled");
                     return OK;
                 })));
     }
@@ -329,15 +331,15 @@ public class AutoEnchantCommand extends Command {
         return status + " " + enchants;
     }
 
-    // 获取装备类型的显示名称
+    // Get equipment type display name
     private String getEquipmentDisplayName(String equipmentType) {
         return switch (equipmentType) {
-            case "sword" -> "钻石剑";
-            case "pickaxe" -> "钻石镐";
-            case "helmet" -> "钻石头盔";
-            case "chestplate" -> "钻石胸甲";
-            case "leggings" -> "钻石护腿";
-            case "boots" -> "钻石靴子";
+            case "sword" -> "Diamond Sword";
+            case "pickaxe" -> "Diamond Pickaxe";
+            case "helmet" -> "Diamond Helmet";
+            case "chestplate" -> "Diamond Chestplate";
+            case "leggings" -> "Diamond Leggings";
+            case "boots" -> "Diamond Boots";
             default -> equipmentType;
         };
     }
